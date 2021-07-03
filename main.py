@@ -87,7 +87,10 @@ class Bot(commands.Bot):
         logging_channel = member.guild.get_channel(EVENT_LOGGING_CHANNEL_ID)
         embed = None
 
-        if after_channel_id != EVENT_VOICE_CHANNEL_ID and before_channel_id == EVENT_VOICE_CHANNEL_ID:
+        if (
+            after_channel_id != EVENT_VOICE_CHANNEL_ID
+            and before_channel_id == EVENT_VOICE_CHANNEL_ID
+        ):
 
             embed = discord.Embed(
                 title=f"{member} Left",
@@ -146,7 +149,9 @@ async def addmanagers(ctx: commands.Context, members: commands.Greedy[discord.Me
 async def managers(ctx: commands.Context):
     try:
         await ctx.send(
-            ", ".join([f"{bot.get_user(member).mention}" for member in bot.event_managers])
+            ", ".join(
+                [f"{bot.get_user(member).mention}" for member in bot.event_managers]
+            )
         )
     except discord.HTTPException:
         await ctx.send("There are no managers yet!")
@@ -171,10 +176,13 @@ async def start(ctx: commands.Context):
     bot.event_started = True
     bot.message_check.start()
     ltlvc_channel = bot.get_channel(EVENT_LOGGING_CHANNEL_ID)
-    
-    await ltlvc_channel.send(embed=discord.Embed(description="**Last To Leave VC Event** has started!", title="EVENT STARTED"))
-    await ctx.send("LTLVC event has been started!")
 
+    await ltlvc_channel.send(
+        embed=discord.Embed(
+            description="**Last To Leave VC Event** has started!", title="EVENT STARTED"
+        )
+    )
+    await ctx.send("LTLVC event has been started!")
 
 
 @commands.has_permissions(manage_guild=True)
@@ -183,8 +191,12 @@ async def stop(ctx: commands.Context):
     bot.event_started = False
     bot.message_check.stop()
     ltlvc_channel = bot.get_channel(EVENT_LOGGING_CHANNEL_ID)
-    
-    await ltlvc_channel.send(embed=discord.Embed(description="**Last To Leave VC Event** has ended!", title="EVENT ENDED"))
+
+    await ltlvc_channel.send(
+        embed=discord.Embed(
+            description="**Last To Leave VC Event** has ended!", title="EVENT ENDED"
+        )
+    )
     await ctx.send("LTLVC event stopped!")
 
 
