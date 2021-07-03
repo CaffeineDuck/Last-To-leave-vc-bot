@@ -1,139 +1,204 @@
+import asyncio
 import random
 from typing import List
+
 import discord
 from discord.ext import commands, tasks
-import asyncio
 
 from constants import *
 
 
-event_managers = []
-random_words = [
-    "pegyan",
-    "sussy",
-    "nou",
-    "heheboi",
-    "gib moni",
-    "nitro",
-    "spotify",
-    "uwu",
-    "smh",
-    "baun",
-    "ikiru",
-    "nettles",
-]
-time_interval = (15, 25)
-event_started = False
-event_bot_kicked_users = []
+class Bot(commands.Bot):
+    def __init__(self, command_prefix: str):
+        super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
+        self.event_started = False
+        self.random_words = [
+            "pegyan",
+            "sussy",
+            "nou",
+            "heheboi",
+            "moni",
+            "nitro",
+            "spotify",
+            "uwu",
+            "smh",
+            "baun",
+            "ikiru",
+            "nettles",
+        ]
 
-bot = commands.Bot(command_prefix="lt!", intents=discord.Intents.all())
+        self.event_bot_kicked_users = []
+        self.event_managers = []
 
+    async def dm_random_check(self, member: discord.Member) -> None:
+        logging_channel = member.guild.get_channel(EVENT_LOGGING_CHANNEL_ID)
 
-async def dm_random_check(self, member: discord.Member) -> None:
-    logging_channel = await member.guild.get_channel(EVENT_LOGGING_CHANNEL_ID)
+        word = random.choice(self.random_words)
 
-    word = random.choice(random_words)
+        def msg_check(m):
+            return m.content.lower() == word and m.author.id == member.id
 
-    def msg_check(m):
-        return m.content.lower() == word and m.author.id == member.id
+        try:
+            await member.send(
+                f"Reply with `{word}` within the next 120 seconds or get kicked!"
+            )
+        except discord.Forbidden:
+            await logging_channel.send(
+                f"{member.mention} **Send message** `{word}` within the next 120 secs in this server or get kicked!"
+            )
 
-    try:
-        await member.send(
-            f"Reply with `{word}` within the next 120 seconds or get kicked!"
-        )
-    except discord.Forbidden:
-        await logging_channel.send(
-            f"{member.mention} **Reply this msg with** `{word}` withing the next 120 secs or get kicked!"
-        )
+        try:
+            await self.wait_for("message", check=msg_check, timeout=120)
+            await member.send("You passed the AFK check!")
+        except asyncio.TimeoutError:
+            embed = discord.Embed(
+                title=f"Member Kicked From The Event!",
+                description=f"{member.mention} was kicked from the ltlvc event, as the member didn't reply to DMs!",
+                color=discord.Color.red(),
+            )
+            self.event_bot_kicked_users.append(member.id)
 
-    try:
-        await self.bot.wait_for("message", check=msg_check, timeout=120)
-        await member.send("You passed the AFK check!")
-    except asyncio.TimeoutError:
-        embed = discord.Embed(
-            title=f"Member Kicked From The Event!",
-            description=f"{member.mention} was kicked from the ltlvc event, as the member didn't reply to DMs!",
-            color=discord.Color.red(),
-        )
-        event_bot_kicked_users.append(member.id)
+            await member.move_to(
+                channel=None,
+                reason="Member didn't respond in time for the LTLVC DM check!",
+            )
+            await logging_channel.send(embed=embed)
+        except discord.Forbidden:
+            await logging_channel.send(
+                f"{member.mention} passed the AFK check! This message is being shown here as I can't send you DMs"
+            )
 
-        await member.move_to(
-            channel=None,
-            reason="Member didn't respond in time for the LTLVC DM check!",
-        )
-        await logging_channel.send(embed=embed)
-
-
-@tasks.loop(minutes=random.randrange(*time_interval))
-async def message_check():
-    if not event_started:
-        return
-    guild = bot.get_guild(GUILD_ID)
-
-    ltlvc_praticipants: List[discord.Member] = [
-        member
-        for member in (
-            discord.utils.get(guild.roles, name="LtlVC Participants")
-        ).members
-        if not member.bot and member.id not in event_managers
-    ]
-
-    for member in ltlvc_praticipants:
-        asyncio.create_task(dm_random_check(member))
-
-
-@bot.event
-async def on_voice_state_update(
-    member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
-):
-    if member.id in event_managers:
-        return
-
-    before_channel_id = getattr(before.channel, "id", None)
-    after_channel_id = getattr(after.channel, "id", None)
-    
-    ltlvc_role = await member.guild.get_role(LTLVC_ROLE_ID)
-    logging_channel = await member.guild.get_channel(EVENT_LOGGING_CHANNEL_ID)
-    embed = None
-
-    if after_channel_id != EVENT_VOICE_CHANNEL_ID:
-        embed = discord.Embed(
-            title=f"{member} Left",
-            description=f"{member.mention} left the LTLVC event!",
-            color=discord.Color.green(),
-        )
-        await member.add_roles(ltlvc_role)
-    elif (
-        after_channel_id == EVENT_VOICE_CHANNEL_ID
-        and before_channel_id != EVENT_VOICE_CHANNEL_ID
+    async def on_voice_state_update(
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        after: discord.VoiceState,
     ):
-        embed = discord.Embed(
-            title=f"{member} Joined",
-            description=f"{member.mention} joined the LTLVC event!",
-            color=discord.Color.red(),
+        if member.id in self.event_managers:
+            return
+
+        if member.id in self.event_bot_kicked_users:
+            return
+
+        before_channel_id = getattr(before.channel, "id", None)
+        after_channel_id = getattr(after.channel, "id", None)
+
+        ltlvc_role = member.guild.get_role(LTLVC_ROLE_ID)
+        logging_channel = member.guild.get_channel(EVENT_LOGGING_CHANNEL_ID)
+        embed = None
+
+        if after_channel_id != EVENT_VOICE_CHANNEL_ID and before_channel_id == EVENT_VOICE_CHANNEL_ID:
+
+            embed = discord.Embed(
+                title=f"{member} Left",
+                description=f"{member.mention} left the LTLVC event!",
+                color=discord.Color.red(),
+            )
+            await member.remove_roles(ltlvc_role)
+        elif (
+            after_channel_id == EVENT_VOICE_CHANNEL_ID
+            and before_channel_id != EVENT_VOICE_CHANNEL_ID
+        ):
+            embed = discord.Embed(
+                title=f"{member} Joined",
+                description=f"{member.mention} joined the LTLVC event!",
+                color=discord.Color.green(),
+            )
+            await member.add_roles(ltlvc_role)
+
+        if embed:
+            await logging_channel.send(embed=embed)
+
+    async def on_ready(self):
+        print(f"Logged in with {self.user.name}")
+
+    @tasks.loop(minutes=random.randrange(15, 25))
+    async def message_check(self):
+        if not self.event_started:
+            return
+
+        guild = self.get_guild(GUILD_ID)
+        ltlvc_role = guild.get_role(LTLVC_ROLE_ID)
+
+        ltlvc_praticipants: List[discord.Member] = [
+            member
+            for member in ltlvc_role.members
+            if not member.bot and member.id not in self.event_managers
+        ]
+
+        for member in ltlvc_praticipants:
+            asyncio.create_task(self.dm_random_check(member))
+
+
+bot = Bot(command_prefix="lt!")
+
+
+@commands.has_permissions(manage_guild=True)
+@bot.command()
+async def addmanagers(ctx: commands.Context, members: commands.Greedy[discord.Member]):
+    members = [member.id for member in members]
+    bot.event_managers.extend(members)
+    await ctx.send("Added them as event managers!")
+
+
+@commands.has_permissions(manage_guild=True)
+@bot.command()
+async def managers(ctx: commands.Context):
+    try:
+        await ctx.send(
+            ", ".join([f"{bot.get_user(member).mention}" for member in bot.event_managers])
         )
-        await member.remove_roles(ltlvc_role)
-
-    if embed:
-        await logging_channel.send(embed)
+    except discord.HTTPException:
+        await ctx.send("There are no managers yet!")
 
 
-@bot.group()
-async def ltlvc(ctx: commands.Context):
-    pass
-
-@ltlvc.command()
-async def setup(ctx: commands.Context):
-    pass
-
-@ltlvc.command()
+@commands.has_permissions(manage_guild=True)
+@bot.command()
 async def addwords(ctx: commands.Context, *words):
-    pass
+    bot.random_words.extend(words)
+    await ctx.send("New random words added to this list!")
 
-@ltlvc.command()
+
+@commands.has_permissions(manage_guild=True)
+@bot.command()
+async def words(ctx: commands.Context):
+    await ctx.send(", ".join(bot.random_words))
+
+
+@commands.has_permissions(manage_guild=True)
+@bot.command()
 async def start(ctx: commands.Context):
-    pass
+    bot.event_started = True
+    bot.message_check.start()
+    ltlvc_channel = bot.get_channel(EVENT_LOGGING_CHANNEL_ID)
+    
+    await ltlvc_channel.send(embed=discord.Embed(description="**Last To Leave VC Event** has started!", title="EVENT STARTED"))
+    await ctx.send("LTLVC event has been started!")
 
-@ltlvc.command()
-async def changeinterval(ctx: commands.Context, start: int, end:int):
-    pass
+
+
+@commands.has_permissions(manage_guild=True)
+@bot.command()
+async def stop(ctx: commands.Context):
+    bot.event_started = False
+    bot.message_check.stop()
+    ltlvc_channel = bot.get_channel(EVENT_LOGGING_CHANNEL_ID)
+    
+    await ltlvc_channel.send(embed=discord.Embed(description="**Last To Leave VC Event** has ended!", title="EVENT ENDED"))
+    await ctx.send("LTLVC event stopped!")
+
+
+@bot.command()
+async def participants(ctx: commands.Context):
+    members = len(
+        [
+            member
+            for member in ctx.guild.get_role(LTLVC_ROLE_ID).members
+            if member.bot not in bot.event_managers
+        ]
+    )
+    await ctx.send(f"There are {members} participants left!")
+
+
+if __name__ == "__main__":
+    bot.run(BOT_TOKEN)

@@ -1,8 +1,10 @@
-from main import EVENT_LOGGING_CHANNEL_ID, EVENT_VOICE_CHANNEL_ID
 import os
+import dotenv
 
-BOT_TOKEN = os.environ['bot_token']
-EVENT_VOICE_CHANNEL_ID = int(os.environ['vc_id'])
-EVENT_LOGGING_CHANNEL_ID = int(os.environ['log_id'])
-LTLVC_ROLE_ID = int(os.environ['role_id'])
-GUILD_ID = int(os.environ['guild_id'])
+dotenv.load_dotenv()
+
+BOT_TOKEN = os.environ['BOT_TOKEN']
+EVENT_VOICE_CHANNEL_ID = int(os.environ['VC_ID'])
+EVENT_LOGGING_CHANNEL_ID = int(os.environ['LOG_ID'])
+LTLVC_ROLE_ID = int(os.environ['ROLE_ID'])
+GUILD_ID = int(os.environ['GUILD_ID'])
