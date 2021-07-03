@@ -1,0 +1,8 @@
+# Python stuffs
+__pycache__/
+
+# Editor Stuffs
+.vscode/
+
+# Config Stuffs
+.env
