@@ -133,7 +133,7 @@ class Bot(commands.Bot):
             asyncio.create_task(self.dm_random_check(member))
 
 
-bot = Bot(command_prefix="lt!")
+bot = Bot(command_prefix=BOT_PREFIX)
 
 
 @commands.has_permissions(manage_guild=True)
