@@ -59,7 +59,7 @@ class Bot(commands.Bot):
 
         try:
             await self.wait_for("message", check=msg_check, timeout=120)
-            await general_channel.send("You passed the AFK check!")
+            await general_channel.send(f"{member.mention} passed the AFK check!")
         except asyncio.TimeoutError:
             embed = discord.Embed(
                 title=f"Member Kicked From The Event!",
