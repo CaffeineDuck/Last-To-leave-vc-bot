@@ -164,7 +164,7 @@ bot = Bot(command_prefix=BOT_PREFIX)
 
 
 @commands.check_any(
-    bot.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
+    commands.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
 )
 @bot.command()
 async def addmanagers(ctx: commands.Context, members: commands.Greedy[discord.Member]):
@@ -174,7 +174,7 @@ async def addmanagers(ctx: commands.Context, members: commands.Greedy[discord.Me
 
 
 @commands.check_any(
-    bot.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
+    commands.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
 )
 @bot.command()
 async def managers(ctx: commands.Context):
@@ -189,7 +189,7 @@ async def managers(ctx: commands.Context):
 
 
 @commands.check_any(
-    bot.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
+    commands.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
 )
 @bot.command()
 async def addwords(ctx: commands.Context, *words):
@@ -198,7 +198,7 @@ async def addwords(ctx: commands.Context, *words):
 
 
 @commands.check_any(
-    bot.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
+    commands.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
 )
 @bot.command()
 async def words(ctx: commands.Context):
@@ -206,7 +206,7 @@ async def words(ctx: commands.Context):
 
 
 @commands.check_any(
-    bot.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
+    commands.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
 )
 @bot.command()
 async def start(ctx: commands.Context):
@@ -230,7 +230,7 @@ async def start(ctx: commands.Context):
 
 
 @commands.check_any(
-    bot.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
+    commands.is_owner(), bot.is_manager(), bot.has_manage_guild_permissions()
 )
 @bot.command()
 async def stop(ctx: commands.Context):
