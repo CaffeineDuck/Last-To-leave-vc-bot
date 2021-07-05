@@ -51,7 +51,7 @@ class Bot(commands.Bot):
         word = random.choice(self.random_words)
 
         def msg_check(m):
-            return m.content.lower() == word and m.author.id == member.id
+            return m.content.lower() == word.lower() and m.author.id == member.id
 
         await general_channel.send(
             f"{member.mention} Reply with `{word}` within the next 120 seconds or get disconnected!"
