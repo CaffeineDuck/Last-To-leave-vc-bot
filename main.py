@@ -54,11 +54,11 @@ class Bot(commands.Bot):
             return m.content.lower() == word.lower() and m.author.id == member.id
 
         await general_channel.send(
-            f"{member.mention} Reply with `{word}` within the next 500 seconds or get disconnected!"
+            f"{member.mention} Reply with `{word}` within the next 300 seconds or get disconnected!"
         )
 
         try:
-            await self.wait_for("message", check=msg_check, timeout=500)
+            await self.wait_for("message", check=msg_check, timeout=300)
             await general_channel.send(f"{member.mention} passed the AFK check!")
         except asyncio.TimeoutError:
             embed = discord.Embed(
