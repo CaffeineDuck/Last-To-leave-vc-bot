@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "last-to-leave-vc"
+version = "0.1.0"
+description = ""
+authors = ["CaffeineDuck <samrid.pandit@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+"discord.py" = "^1.7.3"
+python-dotenv = "^0.19.1"
+jishaku = "^2.3.0"
+
+[tool.poetry.dev-dependencies]
+black = {version = "^21.9b0", allow-prereleases = true}
+isort = "^5.9.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
